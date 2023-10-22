@@ -1,0 +1,38 @@
+---
+- name: switch to ea
+  hosts: myserver
+  gather_facts: no
+
+  tasks:
+    - name: Stop nginx service
+      service:
+        name: nginx
+        state: stopped
+
+    - name: Check if the remote host is up
+      ping:
+
+    - name: Find files and directories in the target folder
+      find:
+        paths: /usr/share/nginx/html/
+        recurse: yes
+        file_type: any
+      register: files_to_delete
+
+    - name: Delete the files and directories
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ files_to_delete.files }}"
+      when: files_to_delete.matched > 0
+
+    - name: copy files from Ea To HTML 
+      copy: 
+        src: /usr/share/nginx/ea-sports/
+        dest: /usr/share/nginx/html/
+        remote_src: yes
+
+    - name: Reload nginx service
+      service:
+        name: nginx
+        state: reloaded
